@@ -3,6 +3,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.types import FSInputFile
+from aiohttp import web
 
 TOKEN = "9003935603:AAGlZ4bamHdiuvxh1Mo4iuEt7Mzt0v5W9oc"
 
@@ -185,7 +186,7 @@ async def process_callbacks(callback: types.CallbackQuery):
                                                 reply_markup=builder.as_markup())
         except Exception:
             await callback.message.edit_text("⚠️ Файл картинки `wechat_qr.png` не найден!",
-                                             reply_markup=builder.as_markup())
+                                           reply_markup=builder.as_markup())
 
     elif data == "qr_whatsapp":
         builder.button(text="◀️ Назад к контактам", callback_data="contacts")
@@ -197,7 +198,7 @@ async def process_callbacks(callback: types.CallbackQuery):
                                                 reply_markup=builder.as_markup())
         except Exception:
             await callback.message.edit_text("⚠️ Файл картинки `whatsapp_qr.png` не найден!",
-                                             reply_markup=builder.as_markup())
+                                           reply_markup=builder.as_markup())
 
     elif data == "back_to_menu":
         if callback.message.photo:
@@ -218,7 +219,22 @@ async def process_callbacks(callback: types.CallbackQuery):
     await callback.answer()
 
 
+# Веб-сервер для поддержки порта на Render и пинга UptimeRobot
+async def handle_ping(request):
+    return web.Response(text="A518 Cargo Bot is active!")
+
+async def start_web_server():
+    app = web.Application()
+    app.router.add_get("/", handle_ping)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", 10000)
+    await site.start()
+
+
 async def main():
+    # Запускаем локальный веб-сервер и самого бота параллельно
+    await start_web_server()
     print("Бот A518 запущен и работает...")
     await dp.start_polling(bot)
 
