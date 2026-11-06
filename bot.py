@@ -162,7 +162,7 @@ async def process_callbacks(callback: types.CallbackQuery):
         text = (
             "📞 **Контакты A518 Карго:**\n\n"
             "• 📱 **Единый номер / WhatsApp:** +7 700 745 45 28\n\n"
-            "📍 **Адрес:** Терехина 34 (Алматы)\n\n"
+            "📍 **Адрес:** ул. Бокейханова, 510Б, оф. 62 (Алматы)\n\n"
             "Нажмите на кнопку ниже, чтобы получить QR-код для связи:"
         )
         builder.button(text="💚 Получить QR WeChat", callback_data="qr_wechat")
@@ -186,7 +186,7 @@ async def process_callbacks(callback: types.CallbackQuery):
                                                 reply_markup=builder.as_markup())
         except Exception:
             await callback.message.edit_text("⚠️ Файл картинки `wechat_qr.png` не найден!",
-                                           reply_markup=builder.as_markup())
+                                             reply_markup=builder.as_markup())
 
     elif data == "qr_whatsapp":
         builder.button(text="◀️ Назад к контактам", callback_data="contacts")
@@ -198,7 +198,7 @@ async def process_callbacks(callback: types.CallbackQuery):
                                                 reply_markup=builder.as_markup())
         except Exception:
             await callback.message.edit_text("⚠️ Файл картинки `whatsapp_qr.png` не найден!",
-                                           reply_markup=builder.as_markup())
+                                             reply_markup=builder.as_markup())
 
     elif data == "back_to_menu":
         if callback.message.photo:
