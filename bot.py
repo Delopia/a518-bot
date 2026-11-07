@@ -2,7 +2,7 @@ import asyncio
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram.types import FSInputFile
+from aiogram.types import FSInputFile, WebAppInfo
 from aiohttp import web
 
 TOKEN = "9003935603:AAGlZ4bamHdiuvxh1Mo4iuEt7Mzt0v5W9oc"
@@ -11,7 +11,7 @@ bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
 
-# Функция главного меню
+# Функция главного меню (с добавлением Web App кнопки сайта)
 def get_main_menu():
     builder = InlineKeyboardBuilder()
     builder.button(text="✈️ Тарифы и сроки", callback_data="tariffs")
@@ -20,6 +20,11 @@ def get_main_menu():
     builder.button(text="⏱ Компенсации при задержке", callback_data="compensation")
     builder.button(text="🤝 Как мы работаем", callback_data="workflow")
     builder.button(text="📞 Контакты и QR-коды", callback_data="contacts")
+    # Кнопка открытия вашего сайта прямо внутри Telegram (Web App)
+    builder.button(
+        text="🌐 Открыть сайт A518", 
+        web_app=WebAppInfo(url="https://a518-aviaexpert.vercel.app/")
+    )
     builder.adjust(1)
     return builder.as_markup()
 
@@ -171,7 +176,10 @@ async def process_callbacks(callback: types.CallbackQuery):
         builder.adjust(1)
 
         if callback.message.photo:
-            await callback.message.delete()
+            try:
+                await callback.message.delete()
+            except Exception:
+                pass
             await callback.message.answer(text, reply_markup=builder.as_markup(), parse_mode="Markdown")
         else:
             await callback.message.edit_text(text, reply_markup=builder.as_markup(), parse_mode="Markdown")
@@ -181,28 +189,37 @@ async def process_callbacks(callback: types.CallbackQuery):
         builder.adjust(1)
         try:
             photo = FSInputFile("wechat_qr.png")
-            await callback.message.delete()
+            try:
+                await callback.message.delete()
+            except Exception:
+                pass
             await callback.message.answer_photo(photo=photo, caption="💚 Наш WeChat QR-код для связи",
                                                 reply_markup=builder.as_markup())
         except Exception:
             await callback.message.edit_text("⚠️ Файл картинки `wechat_qr.png` не найден!",
-                                             reply_markup=builder.as_markup())
+                                           reply_markup=builder.as_markup())
 
     elif data == "qr_whatsapp":
         builder.button(text="◀️ Назад к контактам", callback_data="contacts")
         builder.adjust(1)
         try:
             photo = FSInputFile("whatsapp_qr.png")
-            await callback.message.delete()
+            try:
+                await callback.message.delete()
+            except Exception:
+                pass
             await callback.message.answer_photo(photo=photo, caption="💬 Наш WhatsApp QR-код для связи",
                                                 reply_markup=builder.as_markup())
         except Exception:
             await callback.message.edit_text("⚠️ Файл картинки `whatsapp_qr.png` не найден!",
-                                             reply_markup=builder.as_markup())
+                                           reply_markup=builder.as_markup())
 
     elif data == "back_to_menu":
         if callback.message.photo:
-            await callback.message.delete()
+            try:
+                await callback.message.delete()
+            except Exception:
+                pass
             await callback.message.answer(
                 "Главное меню. Выберите интересующий вас раздел:",
                 reply_markup=get_main_menu()
@@ -233,7 +250,6 @@ async def start_web_server():
 
 
 async def main():
-    # Запускаем локальный веб-сервер и самого бота параллельно
     await start_web_server()
     print("Бот A518 запущен и работает...")
     await dp.start_polling(bot)
