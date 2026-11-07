@@ -7,14 +7,14 @@ from aiohttp import web
 
 TOKEN = "9003935603:AAGlZ4bamHdiuvxh1Mo4iuEt7Mzt0v5W9oc"
 
-# Ваш Telegram ID администратора
-ADMIN_ID = 6069479032
+# Ваш новый Telegram ID администратора
+ADMIN_ID = 299433630
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
 
-# Функция главного меню (с добавлением Web App кнопки сайта)
+# Функция главного меню (с картинкой сверху и кнопкой сайта)
 def get_main_menu():
     builder = InlineKeyboardBuilder()
     builder.button(text="✈️ Тарифы и сроки", callback_data="tariffs")
@@ -23,7 +23,7 @@ def get_main_menu():
     builder.button(text="⏱ Компенсации при задержке", callback_data="compensation")
     builder.button(text="🤝 Как мы работаем", callback_data="workflow")
     builder.button(text="📞 Контакты и QR-коды", callback_data="contacts")
-    # Кнопка открытия вашего сайта прямо внутри Telegram (Web App)
+    # Кнопка открытия вашего сайта внутри Telegram (Web App)
     builder.button(
         text="🌐 Открыть сайт A518", 
         web_app=WebAppInfo(url="https://a518-aviaexpert.vercel.app/")
@@ -32,7 +32,7 @@ def get_main_menu():
     return builder.as_markup()
 
 
-# Команда /start (отправляет картинку menu_logo.png сверху и меню)
+# Команда /start (отправляет картинку-аватарку menu_logo.png сверху и меню)
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
     caption = (
@@ -252,15 +252,19 @@ async def process_callbacks(callback: types.CallbackQuery):
     await callback.answer()
 
 
-# Пересылка любого текстового сообщения от пользователя к вам (админу)
+# Пересылка сообщений от пользователей вам (с фильтром от случайного набора букв)
 @dp.message()
 async def forward_to_admin(message: types.Message):
     if message.from_user.id != ADMIN_ID:
-        try:
-            await message.forward(chat_id=ADMIN_ID)
-            await message.answer("💬 Ваше сообщение отправлено менеджеру. Скоро с вами свяжемся!")
-        except Exception:
-            pass
+        # Проверяем, что это осмысленный текст (длиннее 3 символов) или фото/документ
+        if (message.text and len(message.text.strip()) > 3) or message.photo or message.document:
+            try:
+                await message.forward(chat_id=ADMIN_ID)
+                await message.answer("💬 Ваше сообщение отправлено менеджеру. Скоро с вами свяжемся!")
+            except Exception:
+                pass
+        else:
+            await message.answer("⚠️ Пожалуйста, напишите ваш вопрос подробнее, чтобы менеджер смог вам помочь.")
 
 
 # Веб-сервер для поддержки порта на Render и пинга UptimeRobot
