@@ -7,6 +7,9 @@ from aiohttp import web
 
 TOKEN = "9003935603:AAGlZ4bamHdiuvxh1Mo4iuEt7Mzt0v5W9oc"
 
+# Ваш Telegram ID администратора
+ADMIN_ID = 6069479032
+
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
@@ -247,6 +250,17 @@ async def process_callbacks(callback: types.CallbackQuery):
             )
 
     await callback.answer()
+
+
+# Пересылка любого текстового сообщения от пользователя к вам (админу)
+@dp.message()
+async def forward_to_admin(message: types.Message):
+    if message.from_user.id != ADMIN_ID:
+        try:
+            await message.forward(chat_id=ADMIN_ID)
+            await message.answer("💬 Ваше сообщение отправлено менеджеру. Скоро с вами свяжемся!")
+        except Exception:
+            pass
 
 
 # Веб-сервер для поддержки порта на Render и пинга UptimeRobot
