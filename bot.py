@@ -29,16 +29,28 @@ def get_main_menu():
     return builder.as_markup()
 
 
-# Команда /start
+# Команда /start (отправляет картинку menu_logo.png сверху и меню)
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
-    await message.answer(
+    caption = (
         f"Привет, {message.from_user.first_name}!\n"
         "Добро пожаловать в официальный бот **A518 Эксперт по авиаперевозкам** (Китай — Казахстан).\n\n"
-        "Выберите нужный раздел из меню ниже:",
-        reply_markup=get_main_menu(),
-        parse_mode="Markdown"
+        "Выберите нужный раздел из меню ниже:"
     )
+    try:
+        photo = FSInputFile("menu_logo.png")
+        await message.answer_photo(
+            photo=photo,
+            caption=caption,
+            reply_markup=get_main_menu(),
+            parse_mode="Markdown"
+        )
+    except Exception:
+        await message.answer(
+            caption,
+            reply_markup=get_main_menu(),
+            parse_mode="Markdown"
+        )
 
 
 # Обработка нажатий на инлайн-кнопки
@@ -215,23 +227,24 @@ async def process_callbacks(callback: types.CallbackQuery):
                                            reply_markup=builder.as_markup())
 
     elif data == "back_to_menu":
-        if callback.message.photo:
-            try:
-                await callback.message.delete()
-            except Exception:
-                pass
-            await callback.message.answer(
-                "Главное меню. Выберите интересующий вас раздел:",
+        menu_text = "Главное меню. Выберите интересующий вас раздел:"
+        try:
+            await callback.message.delete()
+        except Exception:
+            pass
+        
+        try:
+            photo = FSInputFile("menu_logo.png")
+            await callback.message.answer_photo(
+                photo=photo,
+                caption=menu_text,
                 reply_markup=get_main_menu()
             )
-        else:
-            try:
-                await callback.message.edit_text(
-                    "Главное меню. Выберите интересующий вас раздел:",
-                    reply_markup=get_main_menu()
-                )
-            except Exception:
-                pass
+        except Exception:
+            await callback.message.answer(
+                menu_text,
+                reply_markup=get_main_menu()
+            )
 
     await callback.answer()
 
