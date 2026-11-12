@@ -7,7 +7,7 @@ from aiohttp import web
 
 TOKEN = "9003935603:AAGlZ4bamHdiuvxh1Mo4iuEt7Mzt0v5W9oc"
 
-# Ваш новый Telegram ID администратора
+# Твой ID администратора
 ADMIN_ID = 299433630
 
 bot = Bot(token=TOKEN)
@@ -23,7 +23,7 @@ def get_main_menu():
     builder.button(text="⏱ Компенсации при задержке", callback_data="compensation")
     builder.button(text="🤝 Как мы работаем", callback_data="workflow")
     builder.button(text="📞 Контакты и QR-коды", callback_data="contacts")
-    # Кнопка открытия вашего сайта внутри Telegram (Web App)
+    # Кнопка открытия сайта внутри Telegram (Web App)
     builder.button(
         text="🌐 Открыть сайт A518", 
         web_app=WebAppInfo(url="https://a518-aviaexpert.vercel.app/")
@@ -32,7 +32,7 @@ def get_main_menu():
     return builder.as_markup()
 
 
-# Команда /start (отправляет картинку-аватарку menu_logo.png сверху и меню)
+# Команда /start
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
     caption = (
@@ -56,11 +56,8 @@ async def cmd_start(message: types.Message):
         )
 
 
-# Обработка нажатий на инлайн-кнопки
-@dp.callback_query(lambda c: c.data in [
-    "tariffs", "rules", "insurance", "compensation", "workflow", "contacts",
-    "allowed_list", "forbidden_list", "qr_wechat", "qr_whatsapp", "back_to_menu"
-])
+# Обработка нажатий на инлайн-кнопки (без капризных фильтров в декораторе)
+@dp.callback_query()
 async def process_callbacks(callback: types.CallbackQuery):
     data = callback.data
     builder = InlineKeyboardBuilder()
@@ -252,11 +249,10 @@ async def process_callbacks(callback: types.CallbackQuery):
     await callback.answer()
 
 
-# Пересылка сообщений от пользователей вам (с фильтром от случайного набора букв)
+# Пересылка сообщений от пользователей
 @dp.message()
 async def forward_to_admin(message: types.Message):
     if message.from_user.id != ADMIN_ID:
-        # Проверяем, что это осмысленный текст (длиннее 3 символов) или фото/документ
         if (message.text and len(message.text.strip()) > 3) or message.photo or message.document:
             try:
                 await message.forward(chat_id=ADMIN_ID)
@@ -267,7 +263,7 @@ async def forward_to_admin(message: types.Message):
             await message.answer("⚠️ Пожалуйста, напишите ваш вопрос подробнее, чтобы менеджер смог вам помочь.")
 
 
-# Веб-сервер для поддержки порта на Render и пинга UptimeRobot
+# Веб-сервер для Render и UptimeRobot
 async def handle_ping(request):
     return web.Response(text="A518 Cargo Bot is active!")
 
