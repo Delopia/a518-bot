@@ -32,6 +32,21 @@ def get_main_menu():
     return builder.as_markup()
 
 
+# Вспомогательная функция для отправки текста вместо фото (чтобы не падало с Bad Request)
+async def show_text_or_edit(callback: types.CallbackQuery, text: str, reply_markup):
+    if callback.message.photo:
+        try:
+            await callback.message.delete()
+        except Exception:
+            pass
+        await callback.message.answer(text, reply_markup=reply_markup, parse_mode="Markdown")
+    else:
+        try:
+            await callback.message.edit_text(text, reply_markup=reply_markup, parse_mode="Markdown")
+        except Exception:
+            await callback.message.answer(text, reply_markup=reply_markup, parse_mode="Markdown")
+
+
 # Команда /start
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
@@ -56,7 +71,7 @@ async def cmd_start(message: types.Message):
         )
 
 
-# Обработка нажатий на инлайн-кнопки (без капризных фильтров в декораторе)
+# Обработка нажатий на инлайн-кнопки
 @dp.callback_query()
 async def process_callbacks(callback: types.CallbackQuery):
     data = callback.data
@@ -74,7 +89,7 @@ async def process_callbacks(callback: types.CallbackQuery):
         )
         builder.button(text="◀️ Назад в меню", callback_data="back_to_menu")
         builder.adjust(1)
-        await callback.message.edit_text(text, reply_markup=builder.as_markup(), parse_mode="Markdown")
+        await show_text_or_edit(callback, text, builder.as_markup())
 
     elif data == "rules":
         text = (
@@ -85,7 +100,7 @@ async def process_callbacks(callback: types.CallbackQuery):
         builder.button(text="❌ Запрещенные товары", callback_data="forbidden_list")
         builder.button(text="◀️ Назад в меню", callback_data="back_to_menu")
         builder.adjust(1)
-        await callback.message.edit_text(text, reply_markup=builder.as_markup(), parse_mode="Markdown")
+        await show_text_or_edit(callback, text, builder.as_markup())
 
     elif data == "allowed_list":
         text = (
@@ -110,7 +125,7 @@ async def process_callbacks(callback: types.CallbackQuery):
         builder.button(text="◀️ К выбору правил", callback_data="rules")
         builder.button(text="◀️ Назад в меню", callback_data="back_to_menu")
         builder.adjust(1)
-        await callback.message.edit_text(text, reply_markup=builder.as_markup(), parse_mode="Markdown")
+        await show_text_or_edit(callback, text, builder.as_markup())
 
     elif data == "forbidden_list":
         text = (
@@ -134,7 +149,7 @@ async def process_callbacks(callback: types.CallbackQuery):
         builder.button(text="◀️ К выбору правил", callback_data="rules")
         builder.button(text="◀️ Назад в меню", callback_data="back_to_menu")
         builder.adjust(1)
-        await callback.message.edit_text(text, reply_markup=builder.as_markup(), parse_mode="Markdown")
+        await show_text_or_edit(callback, text, builder.as_markup())
 
     elif data == "insurance":
         text = (
@@ -149,7 +164,7 @@ async def process_callbacks(callback: types.CallbackQuery):
         )
         builder.button(text="◀️ Назад в меню", callback_data="back_to_menu")
         builder.adjust(1)
-        await callback.message.edit_text(text, reply_markup=builder.as_markup(), parse_mode="Markdown")
+        await show_text_or_edit(callback, text, builder.as_markup())
 
     elif data == "compensation":
         text = (
@@ -160,7 +175,7 @@ async def process_callbacks(callback: types.CallbackQuery):
         )
         builder.button(text="◀️ Назад в меню", callback_data="back_to_menu")
         builder.adjust(1)
-        await callback.message.edit_text(text, reply_markup=builder.as_markup(), parse_mode="Markdown")
+        await show_text_or_edit(callback, text, builder.as_markup())
 
     elif data == "workflow":
         text = (
@@ -173,7 +188,7 @@ async def process_callbacks(callback: types.CallbackQuery):
         )
         builder.button(text="◀️ Назад в меню", callback_data="back_to_menu")
         builder.adjust(1)
-        await callback.message.edit_text(text, reply_markup=builder.as_markup(), parse_mode="Markdown")
+        await show_text_or_edit(callback, text, builder.as_markup())
 
     elif data == "contacts":
         text = (
@@ -186,15 +201,7 @@ async def process_callbacks(callback: types.CallbackQuery):
         builder.button(text="💬 Получить QR WhatsApp", callback_data="qr_whatsapp")
         builder.button(text="◀️ Назад в меню", callback_data="back_to_menu")
         builder.adjust(1)
-
-        if callback.message.photo:
-            try:
-                await callback.message.delete()
-            except Exception:
-                pass
-            await callback.message.answer(text, reply_markup=builder.as_markup(), parse_mode="Markdown")
-        else:
-            await callback.message.edit_text(text, reply_markup=builder.as_markup(), parse_mode="Markdown")
+        await show_text_or_edit(callback, text, builder.as_markup())
 
     elif data == "qr_wechat":
         builder.button(text="◀️ Назад к контактам", callback_data="contacts")
@@ -208,8 +215,7 @@ async def process_callbacks(callback: types.CallbackQuery):
             await callback.message.answer_photo(photo=photo, caption="💚 Наш WeChat QR-код для связи",
                                                 reply_markup=builder.as_markup())
         except Exception:
-            await callback.message.edit_text("⚠️ Файл картинки `wechat_qr.png` не найден!",
-                                           reply_markup=builder.as_markup())
+            await show_text_or_edit(callback, "⚠️ Файл картинки `wechat_qr.png` не найден!", builder.as_markup())
 
     elif data == "qr_whatsapp":
         builder.button(text="◀️ Назад к контактам", callback_data="contacts")
@@ -223,8 +229,7 @@ async def process_callbacks(callback: types.CallbackQuery):
             await callback.message.answer_photo(photo=photo, caption="💬 Наш WhatsApp QR-код для связи",
                                                 reply_markup=builder.as_markup())
         except Exception:
-            await callback.message.edit_text("⚠️ Файл картинки `whatsapp_qr.png` не найден!",
-                                           reply_markup=builder.as_markup())
+            await show_text_or_edit(callback, "⚠️ Файл картинки `whatsapp_qr.png` не найден!", builder.as_markup())
 
     elif data == "back_to_menu":
         menu_text = "Главное меню. Выберите интересующий вас раздел:"
