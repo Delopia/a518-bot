@@ -14,7 +14,7 @@ bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
 
-# Функция главного меню (с картинкой сверху и кнопкой сайта)
+# Функция главного меню (инлайн-кнопки с картинкой)
 def get_main_menu():
     builder = InlineKeyboardBuilder()
     builder.button(text="✈️ Тарифы и сроки", callback_data="tariffs")
@@ -47,7 +47,7 @@ async def show_text_or_edit(callback: types.CallbackQuery, text: str, reply_mark
             await callback.message.answer(text, reply_markup=reply_markup, parse_mode="Markdown")
 
 
-# Команда /start
+# Команда /start (отправляет картинку с инлайн-меню)
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
     caption = (
@@ -268,6 +268,14 @@ async def forward_to_admin(message: types.Message):
             await message.answer("⚠️ Пожалуйста, напишите ваш вопрос подробнее, чтобы менеджер смог вам помочь.")
 
 
+# Установка кнопки "Меню" в интерфейсе Telegram
+async def set_bot_commands(bot: Bot):
+    commands = [
+        types.BotCommand(command="start", description="🚀 Запустить главное меню A518")
+    ]
+    await bot.set_my_commands(commands)
+
+
 # Веб-сервер для Render и UptimeRobot
 async def handle_ping(request):
     return web.Response(text="A518 Cargo Bot is active!")
@@ -283,6 +291,7 @@ async def start_web_server():
 
 async def main():
     await start_web_server()
+    await set_bot_commands(bot)
     print("Бот A518 запущен и работает...")
     await dp.start_polling(bot)
 
